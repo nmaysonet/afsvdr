@@ -5,69 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Amerit Asset KPI & Gap Analysis Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --amerit-navy: #00205B;
-            --amerit-blue: #005696;
-            --amerit-cyan: #0098DB;
-            --amerit-yellow: #FFC627;
-            --amerit-light: #F4F7F9;
-            --danger: #E11D48;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --border: #E5E7EB;
-            --text-dark: #111827;
-            --text-gray: #4B5563;
+            --amerit-yellow: #FFC600;
+            --amerit-grey: #333333;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --border-color: #e2e8f0;
+            --green-bg: #dcfce7;
+            --green-text: #166534;
+            --yellow-bg: #fef08a;
+            --yellow-text: #854d0e;
+            --red-bg: #fee2e2;
+            --red-text: #991b1b;
+            --blue-hover: #f0f9ff;
+            --secondary: #0284c7;
+            --text-muted: #64748b;
         }
-        body {
-            font-family: 'Raleway', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-            margin: 0;
-            background-color: var(--amerit-light);
-            color: var(--text-dark);
+
+        body { 
+            font-family: 'Raleway', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            padding: 20px; 
+            font-size: 14px; 
         }
+
         /* App Header */
-        .app-header {
-            background-color: var(--amerit-navy);
-            color: white;
-            padding: 20px 30px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
+        .header-brand { 
+            font-size: 1.5rem; 
+            font-weight: 900; 
+            color: var(--amerit-grey); 
+            border-bottom: 4px solid var(--amerit-yellow); 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            justify-content: space-between; 
             align-items: center;
-            justify-content: center;
-            text-align: center;
         }
-        .app-header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        .app-header .subtitle {
-            font-size: 13px;
-            color: var(--amerit-cyan);
-            font-weight: 500;
-            text-transform: uppercase;
+        .brand-tag { 
+            font-size: 1rem; 
+            font-style: italic; 
+            color: var(--amerit-yellow); 
+            background: var(--amerit-grey); 
+            padding: 4px 12px; 
+            border-radius: 4px; 
             letter-spacing: 1px;
-            margin-top: 4px;
         }
 
         /* Main Container */
         .container {
-            padding: 25px 30px;
             max-width: 1600px;
             margin: 0 auto;
         }
 
+        /* Loading Banner */
+        #loadingBanner { 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+            margin-bottom: 30px; 
+            border: 2px dashed var(--amerit-yellow); 
+            text-align: center; 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            color: var(--amerit-grey); 
+        }
+
         /* Controls Section */
         .controls-wrapper {
-            background: white;
-            border-radius: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             margin-bottom: 25px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-color);
         }
 
         /* Filters & Toggles */
@@ -84,8 +101,8 @@
         }
         .filter-group label {
             font-size: 12px;
-            font-weight: 600;
-            color: var(--text-gray);
+            font-weight: 700;
+            color: var(--text-muted);
             text-transform: uppercase;
         }
         select, input[type="text"] {
@@ -96,22 +113,21 @@
             font-size: 14px;
             min-width: 180px;
             background-color: white;
-            color: var(--text-dark);
+            color: var(--text-main);
             outline: none;
             cursor: pointer;
+            transition: border-color 0.2s;
         }
         input[type="text"] {
             cursor: text;
         }
         select:focus, input[type="text"]:focus {
-            border-color: var(--amerit-cyan);
-            box-shadow: 0 0 0 3px rgba(0, 152, 219, 0.1);
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
         }
-        
-        /* Dropdown Highlight for Vended */
         option.vended-highlight {
             background-color: var(--amerit-yellow);
-            color: var(--amerit-navy);
+            color: var(--amerit-grey);
             font-weight: bold;
         }
 
@@ -120,18 +136,19 @@
             flex-direction: column;
             gap: 10px;
             margin-left: auto;
-            background: #F8FAFC;
+            background: #f1f5f9;
             padding: 12px 20px;
             border-radius: 6px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-color);
         }
         .toggle-item {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
+            color: var(--amerit-grey);
         }
         .toggle-item input[type="checkbox"] {
             cursor: pointer;
@@ -139,261 +156,214 @@
             height: 16px;
         }
 
-        /* KPI Dashboards */
-        .kpi-header {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--amerit-navy);
-            margin-bottom: 15px;
-            border-bottom: 2px solid var(--amerit-cyan);
-            padding-bottom: 8px;
-            display: inline-block;
+        /* Section Titles */
+        .section-title { 
+            font-size: 1.25rem; 
+            color: var(--amerit-grey); 
+            margin-bottom: 15px; 
+            font-weight: 700; 
+            border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 5px; 
         }
-        .kpi-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .kpi-tile {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border: 1px solid var(--border);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .kpi-tile::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 4px;
-            background: var(--amerit-navy);
-        }
-        .kpi-tile.danger::before { background: var(--danger); }
-        .kpi-tile.success::before { background: var(--success); }
-        .kpi-tile.warning::before { background: var(--warning); }
-        .kpi-tile.cyan::before { background: var(--amerit-cyan); }
-        
-        .kpi-title {
-            font-size: 12px;
-            color: var(--text-gray);
-            text-transform: uppercase;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        .kpi-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--amerit-navy);
+        .section-title.spaced { 
+            margin-top: 40px; 
         }
 
-        /* Audit Dash specific styling */
-        #auditDashboard {
-            display: none;
-            background: #F0F4F8;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px dashed var(--amerit-blue);
-            margin-bottom: 30px;
+        /* KPI Dashboards */
+        .kpi-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 30px; 
+            align-items: stretch; 
         }
+        .kpi-card { 
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            padding: 15px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+            border-top: 4px solid var(--amerit-grey); 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+        }
+        .kpi-card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+            background: var(--blue-hover); 
+        }
+        
+        .stat-box { text-align: center; }
+        .stat-value { font-size: 1.8rem; font-weight: 900; color: var(--amerit-grey); margin-bottom: 4px; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; line-height: 1.2; }
 
         /* Table Styles */
-        .asset-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-        .table-header {
-            padding: 15px 20px;
-            background: #F8FAFC;
-            border-bottom: 1px solid var(--border);
-            font-weight: 600;
-            color: var(--amerit-navy);
-            font-size: 15px;
+        .table-container { margin-bottom: 40px; }
+        .table-header-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-end;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 5px; 
         }
-        .export-btn {
-            font-family: 'Raleway', sans-serif;
-            background-color: var(--success);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            transition: background-color 0.2s;
-        }
-        .export-btn:hover {
-            background-color: #059669;
-        }
-        .table-responsive {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-            vertical-align: top;
-        }
-        th {
-            background-color: white;
-            color: var(--text-gray);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            cursor: pointer;
-            user-select: none;
-        }
-        th:hover {
-            background-color: #F0F9FF;
-            color: var(--amerit-blue);
-        }
-        .sort-icon {
-            display: inline-block;
-            margin-left: 5px;
-            color: var(--amerit-cyan);
-            font-size: 12px;
-        }
-        tbody tr:hover {
-            background-color: #F8FAFC;
-        }
-        .oos-row td {
-            background-color: #FEF2F2;
-        }
-        .oos-row:hover td {
-            background-color: #FEE2E2;
-        }
-        
-        /* Ghost Row Styling */
-        .ghost-row td {
-            background-color: #FEF08A !important; 
-            border-bottom: 1px solid #EAB308 !important;
-        }
-        .ghost-row:hover td {
-            background-color: #FDE047 !important;
+        .table-header-row .section-title {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
-        /* Status & Badges */
-        .ro-badge {
-            background: var(--amerit-cyan); color: white; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 11px; display: inline-block;
+        .export-btn { 
+            background-color: #16a34a; 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            font-size: 0.9rem; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: 0.2s; 
+            font-family: 'Raleway', sans-serif;
         }
-        .status-danger { color: var(--danger); font-weight: 700; }
-        .status-success { color: var(--success); font-weight: 700; }
-        .status-neutral { color: #9CA3AF; }
-        .tooltip-mismatch { cursor: help; border-bottom: 1px dotted var(--danger); }
-        .vdr-comment { color: var(--amerit-blue); font-weight: 600; font-size: 11px; line-height: 1.4; max-width: 300px; display: block; white-space: normal; }
+        .export-btn:hover { background-color: #15803d; }
+
+        .table-responsive { overflow-x: auto; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: var(--card-bg); 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        th { 
+            background-color: var(--amerit-grey); 
+            color: white; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        th:hover { color: var(--amerit-yellow); }
+        .sort-icon { display: inline-block; margin-left: 5px; color: var(--amerit-yellow); font-size: 12px; }
+        tbody tr:hover { background-color: #f1f5f9; }
+        
+        /* Badges & Status */
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; display: inline-block; text-align: center; }
+        .status-green { background: var(--green-bg); color: var(--green-text); border: 1px solid #bbf7d0; }
+        .status-yellow { background: var(--yellow-bg); color: var(--yellow-text); border: 1px solid #fde047; }
+        .status-red { background: var(--red-bg); color: var(--red-text); border: 1px solid #fecaca; }
+        .status-dark { background: var(--amerit-grey); color: var(--amerit-yellow); }
+
+        /* Row Highlighting */
+        .oos-row td { background-color: #fef2f2; }
+        .oos-row:hover td { background-color: #fee2e2; }
+        
+        .ghost-row td { background-color: #fef9c3 !important; border-bottom: 1px solid #fde047 !important; }
+        .ghost-row:hover td { background-color: #fef08a !important; }
+
+        .vdr-comment { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; line-height: 1.4; max-width: 350px; display: block; white-space: normal; }
     </style>
 </head>
 <body>
 
-    <header class="app-header">
-        <h1>Amerit Fleet Solutions</h1>
-        <div class="subtitle">Unified Asset KPI & Gap Analysis Dashboard</div>
-    </header>
+    <div class="header-brand">
+        <div>Amerit Fleet Solutions - Unified Asset KPI & Gap Analysis Dashboard</div>
+        <div class="brand-tag">KEEP ON ROLLING&trade;</div>
+    </div>
 
     <div class="container">
         
-        <div class="controls-wrapper">
-            <div class="filter-section">
-                <div class="filter-group">
-                    <label>Region</label>
-                    <select id="regionSelect"><option value="All">All Regions</option></select>
-                </div>
-                <div class="filter-group">
-                    <label>Subregion</label>
-                    <select id="subregionSelect"><option value="All">All Subregions</option></select>
-                </div>
-                <div class="filter-group">
-                    <label>Branch</label>
-                    <select id="branchSelect"><option value="All">All Branches</option></select>
-                </div>
-                <div class="filter-group">
-                    <label>Search Unit #</label>
-                    <input type="text" id="unitSearch" placeholder="e.g. 15-014" />
-                </div>
+        <div id="loadingBanner">
+            🔄 Automatically fetching live data from master_file.xlsx...
+        </div>
 
-                <div class="toggles">
-                    <div class="toggle-item">
-                        <input type="checkbox" id="oosToggle" checked />
-                        <label for="oosToggle">Table: Only Show OOS Assets</label>
+        <div id="dashboardContent" style="display: none;">
+            
+            <div class="controls-wrapper">
+                <div class="filter-section">
+                    <div class="filter-group">
+                        <label>Region</label>
+                        <select id="regionSelect"><option value="All">All Regions</option></select>
                     </div>
-                    <div class="toggle-item" style="color: var(--danger);">
-                        <input type="checkbox" id="deltaToggle" />
-                        <label for="deltaToggle">Table: Only Show Discrepancies</label>
+                    <div class="filter-group">
+                        <label>Subregion</label>
+                        <select id="subregionSelect"><option value="All">All Subregions</option></select>
                     </div>
-                    <div class="toggle-item" style="color: var(--amerit-blue); border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px;">
-                        <input type="checkbox" id="vendedToggle" />
-                        <label for="vendedToggle">Only Show Vended Sites</label>
+                    <div class="filter-group">
+                        <label>Branch</label>
+                        <select id="branchSelect"><option value="All">All Branches</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Search Unit #</label>
+                        <input type="text" id="unitSearch" placeholder="e.g. 15-014" />
+                    </div>
+
+                    <div class="toggles">
+                        <div class="toggle-item">
+                            <input type="checkbox" id="oosToggle" checked />
+                            <label for="oosToggle">Table: Only Show OOS Assets</label>
+                        </div>
+                        <div class="toggle-item" style="color: var(--red-text);">
+                            <input type="checkbox" id="deltaToggle" />
+                            <label for="deltaToggle">Table: Only Show Discrepancies</label>
+                        </div>
+                        <div class="toggle-item" style="color: var(--secondary); border-top: 1px solid #cbd5e1; padding-top: 8px; margin-top: 2px;">
+                            <input type="checkbox" id="vendedToggle" />
+                            <label for="vendedToggle">Only Show Vended Sites</label>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="kpi-header">Garda Operations Dashboard</div>
-        <div class="kpi-container" id="kpiContainer">
-            <div class="kpi-tile"><div class="kpi-title">Total Units (DOMO VDR)</div><div class="kpi-value">0</div></div>
-            <div class="kpi-tile"><div class="kpi-title">Max Routes</div><div class="kpi-value">0</div></div>
-            <div class="kpi-tile danger"><div class="kpi-title">Current OOS</div><div class="kpi-value">0</div></div>
-            <div class="kpi-tile success"><div class="kpi-title">Active Units</div><div class="kpi-value">0</div></div>
-        </div>
+            <div class="section-title">Garda Operations Dashboard</div>
+            <div class="kpi-grid" id="kpiContainer"></div>
 
-        <div id="auditDashboard">
-            <div class="kpi-header" style="color: var(--amerit-blue); border-bottom-color: var(--amerit-blue);">Domo VDR Audit Dashboard</div>
-            <div class="kpi-container" id="auditKpiContainer" style="margin-bottom: 0;">
+            <div id="auditDashboard">
+                <div class="section-title spaced">Domo VDR Audit Dashboard</div>
+                <div class="kpi-grid" id="auditKpiContainer"></div>
             </div>
-        </div>
 
-        <div class="asset-container">
-            <div class="table-header">
-                <span>Unit Drill-Down & Discrepancy Analysis</span>
-                <button class="export-btn" onclick="exportToExcel()">📥 Export to Excel</button>
+            <div class="table-container">
+                <div class="table-header-row">
+                    <div class="section-title">Unit Drill-Down & Discrepancy Analysis</div>
+                    <button class="export-btn" onclick="exportToExcel()">📥 Export to Excel</button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table id="drilldownTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0, 'string')">Truck # <span class="sort-icon" id="sort-icon-0"></span></th>
+                                <th onclick="sortTable(1, 'string')">Region <span class="sort-icon" id="sort-icon-1"></span></th>
+                                <th onclick="sortTable(2, 'string')">SubRegion <span class="sort-icon" id="sort-icon-2"></span></th>
+                                <th onclick="sortTable(3, 'string')">Branch <span class="sort-icon" id="sort-icon-3"></span></th>
+                                <th onclick="sortTable(4, 'string')">Garda OOS <span class="sort-icon" id="sort-icon-4"></span></th>
+                                <th onclick="sortTable(5, 'string')">Domo OOS <span class="sort-icon" id="sort-icon-5"></span></th>
+                                <th onclick="sortTable(6, 'string')">OOS Discrepancy <span class="sort-icon" id="sort-icon-6"></span></th>
+                                <th style="text-align: center;" onclick="sortTable(7, 'number')"># Open ROs <span class="sort-icon" id="sort-icon-7"></span></th>
+                                <th onclick="sortTable(8, 'string')">All Associated ROs <span class="sort-icon" id="sort-icon-8"></span></th>
+                                <th onclick="sortTable(9, 'number')">Days Down <span class="sort-icon" id="sort-icon-9"></span></th>
+                                <th onclick="sortTable(10, 'string')">VDR / VSD Comments <span class="sort-icon" id="sort-icon-10"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="assetTableBody"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="table-responsive">
-                <table id="drilldownTable">
-                    <thead>
-                        <tr>
-                            <th onclick="sortTable(0, 'string')">Truck # <span class="sort-icon" id="sort-icon-0"></span></th>
-                            <th onclick="sortTable(1, 'string')">Region <span class="sort-icon" id="sort-icon-1"></span></th>
-                            <th onclick="sortTable(2, 'string')">SubRegion <span class="sort-icon" id="sort-icon-2"></span></th>
-                            <th onclick="sortTable(3, 'string')">Branch <span class="sort-icon" id="sort-icon-3"></span></th>
-                            <th onclick="sortTable(4, 'string')">Garda OOS <span class="sort-icon" id="sort-icon-4"></span></th>
-                            <th onclick="sortTable(5, 'string')">Domo OOS <span class="sort-icon" id="sort-icon-5"></span></th>
-                            <th onclick="sortTable(6, 'string')">OOS Discrepancy <span class="sort-icon" id="sort-icon-6"></span></th>
-                            <th style="text-align: center;" onclick="sortTable(7, 'number')"># Open ROs <span class="sort-icon" id="sort-icon-7"></span></th>
-                            <th onclick="sortTable(8, 'string')">All Associated ROs <span class="sort-icon" id="sort-icon-8"></span></th>
-                            <th onclick="sortTable(9, 'number')">Days Down <span class="sort-icon" id="sort-icon-9"></span></th>
-                            <th onclick="sortTable(10, 'string')">VDR / VSD Comments <span class="sort-icon" id="sort-icon-10"></span></th>
-                        </tr>
-                    </thead>
-                    <tbody id="assetTableBody">
-                        <tr><td colspan="11" style="text-align: center; color: var(--amerit-blue); padding: 30px; font-weight: bold;">🔄 Automatically fetching live data from secure database...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
+        </div>
     </div>
 
     <script>
         // ============================================================================
         // 🔗 SYSTEM CONFIGURATION
-        // REPLACE THIS URL WITH THE RAW GITHUB LINK TO YOUR master_file.xlsx
-        // Example: "https://raw.githubusercontent.com/YourUser/YourRepo/main/master_file.xlsx"
+        // Uses relative path since the HTML and Excel file are hosted in the same repo
         // ============================================================================
         const GITHUB_RAW_URL = "master_file.xlsx"; 
         
@@ -462,7 +432,7 @@
         }
 
         function populateBranches() {
-            branchSelect.innerHTML = '<option value="All" style="background-color: white; color: black; font-weight: normal;">All Branches</option>';
+            branchSelect.innerHTML = '<option value="All" style="font-weight: normal;">All Branches</option>';
             const reg = regionSelect.value;
             const subreg = subregionSelect.value;
             if (reg !== "All" && subreg !== "All" && baselineData[reg] && baselineData[reg][subreg]) {
@@ -477,13 +447,8 @@
 
         // --- AUTOMATED GITHUB FETCH ENGINE ---
         async function loadDataFromGitHub() {
-            if (GITHUB_RAW_URL === "YOUR_RAW_GITHUB_URL_HERE") {
-                document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--danger); padding: 30px; font-weight: bold;">System Error: GitHub URL has not been configured in the HTML code. Please edit the HTML file and paste your raw GitHub URL at line ~150.</td></tr>`;
-                return;
-            }
-
             try {
-                const response = await fetch(GITHUB_RAW_URL);
+                const response = await fetch(GITHUB_RAW_URL + '?v=' + new Date().getTime()); // Prevent caching
                 if (!response.ok) throw new Error("Network response was not ok");
                 const arrayBuffer = await response.arrayBuffer();
                 const data = new Uint8Array(arrayBuffer);
@@ -508,13 +473,17 @@
                 processGarda(sheet1);
                 
                 isDataLoaded = true;
+                
+                // Hide banner, show dashboard
+                document.getElementById('loadingBanner').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+                
                 populateRegions();
                 updateDashboard();
-                document.getElementById('auditDashboard').style.display = 'block';
 
             } catch (error) {
                 console.error("Error loading data:", error);
-                document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--danger); padding: 30px; font-weight: bold;">System Error: Unable to fetch live data. Please verify your GitHub URL.</td></tr>`;
+                document.getElementById('loadingBanner').innerHTML = `<span style="color: var(--red-text);">❌ System Error: Unable to fetch live data. Please ensure 'master_file.xlsx' is in the root folder.</span>`;
             }
         }
 
@@ -777,28 +746,28 @@
 
                 let isGhostRow = !data.inGardaFile;
 
-                let domoOosHtml = data.isDomoOOS ? `<span class="status-danger">OOS</span>` : `<span class="status-success">Active</span>`;
-                let oosMatchHtml = `<span class="status-success">Match</span>`;
+                let domoOosHtml = data.isDomoOOS ? `<span class="badge status-red">OOS</span>` : `<span class="badge status-green">Active</span>`;
+                let oosMatchHtml = `<span class="badge status-green">Match</span>`;
                 
                 if (isGhostRow && data.isDomoOOS) {
-                    oosMatchHtml = `<span class="status-danger">Mismatch (Not in Garda File)</span>`;
+                    oosMatchHtml = `<span class="badge status-red">Mismatch (Not in Garda)</span>`;
                 } else if (data.inGardaFile) {
-                    if (data.gardaOOS && !data.isDomoOOS) oosMatchHtml = `<span class="status-danger">Mismatch (Not OOS in Domo)</span>`;
-                    else if (!data.gardaOOS && data.isDomoOOS) oosMatchHtml = `<span class="status-danger">Mismatch (Not OOS in Garda)</span>`;
+                    if (data.gardaOOS && !data.isDomoOOS) oosMatchHtml = `<span class="badge status-red">Mismatch (Not in Domo)</span>`;
+                    else if (!data.gardaOOS && data.isDomoOOS) oosMatchHtml = `<span class="badge status-red">Mismatch (Not in Garda)</span>`;
                 }
 
-                let roHtml = data.roSet.size > 0 ? `<span class="ro-badge-blue">${data.roSet.size}</span>` : `0`;
-                let allROsHtml = data.roSet.size > 0 ? Array.from(data.roSet).join(", ") : `<span class="status-neutral">-</span>`;
+                let roHtml = data.roSet.size > 0 ? `<span class="badge status-dark">${data.roSet.size}</span>` : `0`;
+                let allROsHtml = data.roSet.size > 0 ? Array.from(data.roSet).join(", ") : `<span style="color: var(--text-muted);">-</span>`;
 
                 let displayComments = data.gardaComments; 
                 if (data.comments && data.comments.length > 0) {
                     let uniqueComments = [...new Set(data.comments)].filter(c => c !== "");
                     if (uniqueComments.length > 0) {
-                        displayComments += (displayComments ? "<br><br>" : "") + `<div class="vdr-comment">` + uniqueComments.join(`</div><div class="vdr-comment" style="margin-top: 5px; border-top: 1px dashed #CBD5E1; padding-top: 5px;">`) + `</div>`;
+                        displayComments += (displayComments ? "<br><br>" : "") + `<div class="vdr-comment">` + uniqueComments.join(`</div><div class="vdr-comment" style="margin-top: 5px; border-top: 1px dashed #e2e8f0; padding-top: 5px;">`) + `</div>`;
                     }
                 }
 
-                let oosCellContent = isGhostRow ? `<span style="font-weight: bold; color: var(--danger);">Missing from Garda OOS</span>` : (data.gardaOOS ? "OOS" : "");
+                let oosCellContent = isGhostRow ? `<span style="font-weight: bold; color: var(--red-text);">Missing from Garda OOS</span>` : (data.gardaOOS ? "OOS" : "");
                 let trClass = isGhostRow ? 'ghost-row' : ((data.gardaOOS || data.isDomoOOS) ? 'oos-row' : '');
 
                 tableHtml += `
@@ -807,55 +776,75 @@
                         <td>${data.region}</td>
                         <td>${data.subregion}</td>
                         <td>${data.branch}</td>
-                        <td>${oosCellContent}</td>
+                        <td style="font-weight: 700;">${oosCellContent}</td>
                         <td>${domoOosHtml}</td>
                         <td>${oosMatchHtml}</td>
                         <td style="text-align: center;">${roHtml}</td>
                         <td>${allROsHtml}</td>
-                        <td>${isGhostRow ? '' : data.daysDown}</td>
+                        <td style="text-align: center; font-weight: 700;">${isGhostRow ? '' : data.daysDown}</td>
                         <td>${displayComments}</td>
                     </tr>
                 `;
             }
 
+            // ---- Build KPI Cards Template Function ----
+            function buildKpiCard(title, val, borderClass, textClass) {
+                return `
+                <div class="kpi-card" style="border-color: ${borderClass};">
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: ${textClass};">${val}</div>
+                        <div class="stat-label">${title}</div>
+                    </div>
+                </div>`;
+            }
+
+            // ---- Render Garda KPIs ----
             const activeUnits = Math.max(0, topTotalUnits - gardaOosCount);
             const delta = (activeUnits - topMaxRoutes); 
-            let deltaColor = 'cyan';
-            if (delta < 0) deltaColor = 'danger';
-            else if (delta === 0) deltaColor = 'warning';
+            
+            let deltaColorStr = 'var(--amerit-grey)';
+            let deltaBorderStr = 'var(--amerit-grey)';
+            if (delta < 0) { deltaColorStr = 'var(--red-text)'; deltaBorderStr = 'var(--danger)'; }
+            else if (delta === 0) { deltaColorStr = 'var(--yellow-text)'; deltaBorderStr = 'var(--warning)'; }
 
             const availability = topTotalUnits > 0 ? ((activeUnits / topTotalUnits) * 100).toFixed(1) + "%" : "0.0%";
             const useful = topMaxRoutes > 0 ? ((activeUnits / topMaxRoutes) * 100).toFixed(1) + "%" : "0.0%";
 
-            document.getElementById('kpiContainer').innerHTML = `
-                <div class="kpi-tile"><div class="kpi-title">Total Units (DOMO VDR)</div><div class="kpi-value">${topTotalUnits}</div></div>
-                <div class="kpi-tile"><div class="kpi-title">Max Routes</div><div class="kpi-value">${topMaxRoutes}</div></div>
-                <div class="kpi-tile danger"><div class="kpi-title">Current OOS (Garda)</div><div class="kpi-value">${gardaOosCount}</div></div>
-                <div class="kpi-tile success"><div class="kpi-title">Active Units</div><div class="kpi-value">${activeUnits}</div></div>
-                <div class="kpi-tile ${deltaColor}"><div class="kpi-title">Delta (Act vs Max)</div><div class="kpi-value">${delta > 0 ? '+'+delta : delta}</div></div>
-                <div class="kpi-tile"><div class="kpi-title">Availability %</div><div class="kpi-value">${availability}</div></div>
-                <div class="kpi-tile"><div class="kpi-title">Useful %</div><div class="kpi-value">${useful}</div></div>
-            `;
+            document.getElementById('kpiContainer').innerHTML = 
+                buildKpiCard("Total Units (DOMO VDR)", topTotalUnits, "var(--amerit-grey)", "var(--amerit-grey)") +
+                buildKpiCard("Max Routes", topMaxRoutes, "var(--amerit-grey)", "var(--amerit-grey)") +
+                buildKpiCard("Current OOS (Garda)", gardaOosCount, "var(--danger)", "var(--red-text)") +
+                buildKpiCard("Active Units", activeUnits, "var(--success)", "var(--green-text)") +
+                buildKpiCard("Delta (Act vs Max)", (delta > 0 ? '+'+delta : delta), deltaBorderStr, deltaColorStr) +
+                buildKpiCard("Availability %", availability, "var(--amerit-grey)", "var(--amerit-grey)") +
+                buildKpiCard("Useful %", useful, "var(--amerit-grey)", "var(--amerit-grey)");
 
+            // ---- Render Table ----
             if (tableHtml === "") {
-                 tableHtml = `<tr><td colspan="11" style="text-align: center; color: var(--text-gray); padding: 30px;">No assets match this filter criteria.</td></tr>`;
+                 tableHtml = `<tr><td colspan="11" style="text-align: center; color: var(--text-muted); padding: 30px;">No assets match this filter criteria.</td></tr>`;
             }
             document.getElementById('assetTableBody').innerHTML = tableHtml;
 
+            // ---- Render Audit KPIs ----
             const auditActive = Math.max(0, auditTotalUnits - auditOosCount);
             const auditDelta = auditActive - auditMaxRoutes;
+            
+            let auditDeltaColorStr = 'var(--amerit-grey)';
+            let auditDeltaBorderStr = 'var(--amerit-grey)';
+            if (auditDelta < 0) { auditDeltaColorStr = 'var(--red-text)'; auditDeltaBorderStr = 'var(--danger)'; }
+            else if (auditDelta === 0) { auditDeltaColorStr = 'var(--yellow-text)'; auditDeltaBorderStr = 'var(--warning)'; }
+
             const auditAvail = auditTotalUnits > 0 ? ((auditActive / auditTotalUnits) * 100).toFixed(1) + "%" : "0.0%";
             const auditUseful = auditMaxRoutes > 0 ? ((auditActive / auditMaxRoutes) * 100).toFixed(1) + "%" : "0.0%";
 
-            document.getElementById('auditKpiContainer').innerHTML = `
-                <div class="kpi-tile"><div class="kpi-title">Total Units (DOMO VDR)</div><div class="kpi-value">${auditTotalUnits}</div></div>
-                <div class="kpi-tile"><div class="kpi-title">Max Routes</div><div class="kpi-value">${auditMaxRoutes}</div></div>
-                <div class="kpi-tile danger"><div class="kpi-title">Current OOS (DOMO VDR)</div><div class="kpi-value">${auditOosCount}</div></div>
-                <div class="kpi-tile success"><div class="kpi-title">Active Units</div><div class="kpi-value">${auditActive}</div></div>
-                <div class="kpi-tile ${auditDelta < 0 ? 'danger' : (auditDelta == 0 ? 'warning' : 'cyan')}"><div class="kpi-title">Delta (Act vs Max)</div><div class="kpi-value">${auditDelta > 0 ? '+'+auditDelta : auditDelta}</div></div>
-                <div class="kpi-tile"><div class="kpi-title">Availability %</div><div class="kpi-value">${auditAvail}</div></div>
-                <div class="kpi-tile"><div class="kpi-title">Useful %</div><div class="kpi-value">${auditUseful}</div></div>
-            `;
+            document.getElementById('auditKpiContainer').innerHTML = 
+                buildKpiCard("Total Units (DOMO VDR)", auditTotalUnits, "var(--amerit-grey)", "var(--amerit-grey)") +
+                buildKpiCard("Max Routes", auditMaxRoutes, "var(--amerit-grey)", "var(--amerit-grey)") +
+                buildKpiCard("Current OOS (DOMO VDR)", auditOosCount, "var(--danger)", "var(--red-text)") +
+                buildKpiCard("Active Units", auditActive, "var(--success)", "var(--green-text)") +
+                buildKpiCard("Delta (Act vs Max)", (auditDelta > 0 ? '+'+auditDelta : auditDelta), auditDeltaBorderStr, auditDeltaColorStr) +
+                buildKpiCard("Availability %", auditAvail, "var(--amerit-grey)", "var(--amerit-grey)") +
+                buildKpiCard("Useful %", auditUseful, "var(--amerit-grey)", "var(--amerit-grey)");
 
             if (currentSortColumn !== -1) {
                 let savedDirection = isAscending; 
@@ -873,4 +862,3 @@
     </script>
 </body>
 </html>
-
