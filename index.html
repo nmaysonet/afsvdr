@@ -33,6 +33,7 @@
             padding: 20px 30px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
@@ -59,7 +60,7 @@
             margin: 0 auto;
         }
 
-        /* Upload & Controls Section */
+        /* Controls Section */
         .controls-wrapper {
             background: white;
             border-radius: 10px;
@@ -89,6 +90,7 @@
             margin-bottom: 8px;
         }
         .upload-card input[type="file"] {
+            font-family: 'Raleway', sans-serif;
             font-size: 14px;
             color: var(--text-gray);
             cursor: pointer;
@@ -330,18 +332,16 @@
 <body>
 
     <header class="app-header">
-        <div>
-            <h1>Amerit Fleet Solutions</h1>
-            <div class="subtitle">Unified Asset KPI & Gap Analysis Dashboard</div>
-        </div>
+        <h1>Amerit Fleet Solutions</h1>
+        <div class="subtitle">Unified Asset KPI & Gap Analysis Dashboard</div>
     </header>
 
     <div class="container">
         
         <div class="controls-wrapper">
             <div class="upload-card">
-                <label>📁 Upload Unified Master Workbook</label>
-                <div style="font-size: 12px; color: #065F46; margin-bottom: 10px;">Includes: National Consolidation, DOMO Unit Listing, and Domo VDR Summary</div>
+                <label>📁 Drop Master File Here</label>
+                <div style="font-size: 12px; color: #065F46; margin-bottom: 10px;">Please upload your unified <strong>master_file.xlsx</strong> containing all records.</div>
                 <input type="file" id="masterUpload" accept=".xlsx, .xls" />
             </div>
 
@@ -417,7 +417,7 @@
                         </tr>
                     </thead>
                     <tbody id="assetTableBody">
-                        <tr><td colspan="11" style="text-align: center; color: var(--text-gray); padding: 30px;">Please upload the Unified Workbook to view data.</td></tr>
+                        <tr><td colspan="11" style="text-align: center; color: var(--text-gray); padding: 30px;">Please manually select your master_file.xlsx to view data.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -429,7 +429,7 @@
         function exportToExcel() {
             const table = document.getElementById("drilldownTable");
             if (table.rows.length <= 1 || (table.rows.length === 2 && table.rows[1].cells[0].colSpan > 1)) {
-                alert("No data available to export! Please upload file first.");
+                alert("No data available to export! Please wait for data to load.");
                 return;
             }
             const wb = XLSX.utils.table_to_book(table, { sheet: "Drilldown Data" });
@@ -453,8 +453,8 @@
             return match && vendedSiteCodes.has(match[0]);
         }
 
-        let baselineData = {}; // Dynamically populated
-        let masterUnits = {};  // Dynamically populated by Master
+        let baselineData = {}; 
+        let masterUnits = {};  
         let isDataLoaded = false;
 
         const regionSelect = document.getElementById('regionSelect');
@@ -466,7 +466,7 @@
         const vendedToggle = document.getElementById('vendedToggle');
         
         document.getElementById('masterUpload').addEventListener('change', handleFileUpload);
-        
+
         regionSelect.addEventListener('change', () => { populateSubregions(); updateDashboard(); });
         subregionSelect.addEventListener('change', () => { populateBranches(); updateDashboard(); });
         branchSelect.addEventListener('change', updateDashboard);
@@ -506,44 +506,52 @@
             }
         }
 
+        // --- MANUAL UPLOAD PROCESSING ENGINE ---
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
+            document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--amerit-blue); padding: 30px; font-weight: bold;">🔄 Processing workbook data...</td></tr>`;
+
             const reader = new FileReader();
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                
-                const names = workbook.SheetNames.map(n => n.toLowerCase());
-                
-                const tab1Name = workbook.SheetNames[names.findIndex(n => n.includes("national"))];
-                const tab2Name = workbook.SheetNames[names.findIndex(n => n.includes("domo unit") || n.includes("master"))];
-                const tab3Name = workbook.SheetNames[names.findIndex(n => n.includes("summary"))];
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    const names = workbook.SheetNames.map(n => n.toLowerCase());
+                    
+                    const tab1Name = workbook.SheetNames[names.findIndex(n => n.includes("national"))];
+                    const tab2Name = workbook.SheetNames[names.findIndex(n => n.includes("domo unit") || n.includes("listing") || n.includes("master"))];
+                    const tab3Name = workbook.SheetNames[names.findIndex(n => n.includes("summary"))];
 
-                if (!tab1Name || !tab2Name || !tab3Name) {
-                    alert("Error: Could not find all required tabs. Please ensure names match the template.");
-                    return;
+                    if (!tab1Name || !tab2Name || !tab3Name) {
+                        alert("Error: Could not find all required tabs (National Consolidation, DOMO Unit Listing, Summary). Please ensure names match the template.");
+                        document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--danger); padding: 30px; font-weight: bold;">Error: Missing required tabs in the uploaded file.</td></tr>`;
+                        return;
+                    }
+
+                    const sheet1 = XLSX.utils.sheet_to_json(workbook.Sheets[tab1Name], {header: 1, defval: ""});
+                    const sheet2 = XLSX.utils.sheet_to_json(workbook.Sheets[tab2Name], {header: 1, defval: ""});
+                    const sheet3 = XLSX.utils.sheet_to_json(workbook.Sheets[tab3Name], {header: 1, defval: ""});
+
+                    processSummary(sheet3);
+                    processMaster(sheet2);
+                    processGarda(sheet1);
+                    
+                    isDataLoaded = true;
+                    populateRegions();
+                    updateDashboard();
+                    document.getElementById('auditDashboard').style.display = 'block';
+
+                } catch (error) {
+                    console.error("Error processing file:", error);
+                    document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--danger); padding: 30px; font-weight: bold;">System Error: Unable to process the Excel file. Ensure it is a valid workbook.</td></tr>`;
                 }
-
-                const sheet1 = XLSX.utils.sheet_to_json(workbook.Sheets[tab1Name], {header: 1, defval: ""});
-                const sheet2 = XLSX.utils.sheet_to_json(workbook.Sheets[tab2Name], {header: 1, defval: ""});
-                const sheet3 = XLSX.utils.sheet_to_json(workbook.Sheets[tab3Name], {header: 1, defval: ""});
-
-                processSummary(sheet3);
-                processMaster(sheet2);
-                processGarda(sheet1);
-                
-                isDataLoaded = true;
-                populateRegions();
-                updateDashboard();
-                document.getElementById('auditDashboard').style.display = 'block';
-                alert("Unified Workbook Loaded Successfully!");
             };
             reader.readAsArrayBuffer(file);
         }
 
-        // --- PARSE SUMMARY TO BUILD BASELINE DROPDOWNS & TARGETS ---
         function processSummary(sheet) {
             let summaryRowIdx = -1;
             for(let i=0; i<10; i++) {
@@ -558,7 +566,6 @@
             let idxTotalUnits = headers.indexOf("TOTAL UNITS TOTAL");
             let idxOos = headers.indexOf("# OOS TOTAL");
             
-            // Fallbacks
             if (idxMaxRoutes === -1) idxMaxRoutes = headers.indexOf("MAX ROUTES");
             if (idxTotalUnits === -1) idxTotalUnits = headers.indexOf("TOTAL UNITS");
             if (idxOos === -1) idxOos = headers.indexOf("# OOS");
@@ -585,7 +592,6 @@
             }
         }
 
-        // --- PARSE DOMO MASTER LIST TO BUILD UNIVERSE OF TRUCKS ---
         function processMaster(sheet) {
             let headerRowIdx = -1;
             for(let i=0; i<10; i++) {
@@ -600,6 +606,7 @@
             let regIdx = headers.indexOf("GARDA REGION");
             let subIdx = headers.indexOf("GARDA SUBREGION");
             let branchIdx = headers.indexOf("BRANCH");
+            if (branchIdx === -1) branchIdx = headers.indexOf("GARDA SHOPNAME");
             let oosIdx = headers.indexOf("OOS FLAG");
             let roIdx = headers.indexOf("RONUM");
             let commentIdx = headers.indexOf("ROSECTIONCOMMENT");
@@ -615,9 +622,9 @@
                 
                 if (!masterUnits[cleanUnit]) {
                     masterUnits[cleanUnit] = {
-                        region: row[regIdx] || "",
-                        subregion: row[subIdx] || "",
-                        branch: row[branchIdx] || "",
+                        region: regIdx !== -1 && row[regIdx] ? String(row[regIdx]).trim() : "",
+                        subregion: subIdx !== -1 && row[subIdx] ? String(row[subIdx]).trim() : "",
+                        branch: branchIdx !== -1 && row[branchIdx] ? String(row[branchIdx]).trim() : "",
                         isDomoOOS: false,
                         roSet: new Set(),
                         comments: [],
@@ -628,19 +635,18 @@
                     };
                 }
                 
-                if (row[oosIdx] && String(row[oosIdx]).toUpperCase() === "OOS") {
+                if (oosIdx !== -1 && row[oosIdx] && (String(row[oosIdx]).toUpperCase() === "OOS" || String(row[oosIdx]).toUpperCase() === "YES")) {
                     masterUnits[cleanUnit].isDomoOOS = true;
                 }
-                if (row[roIdx]) {
+                if (roIdx !== -1 && row[roIdx]) {
                     masterUnits[cleanUnit].roSet.add(String(row[roIdx]));
                 }
-                if (row[commentIdx] && String(row[commentIdx]).trim() !== "") {
+                if (commentIdx !== -1 && row[commentIdx] && String(row[commentIdx]).trim() !== "") {
                     masterUnits[cleanUnit].comments.push(String(row[commentIdx]));
                 }
             }
         }
 
-        // --- PARSE GARDA OOS TO OVERLAY ONTO MASTER LIST ---
         function processGarda(sheet) {
             let headerRowIdx = -1;
             for(let i=0; i<10; i++) {
@@ -662,7 +668,6 @@
                 
                 let cleanUnit = String(row[unitIdx]).toUpperCase().replace(/^GAR-/, "");
                 
-                // If unit exists in Master List, overlay the data
                 if (masterUnits[cleanUnit]) {
                     masterUnits[cleanUnit].inGardaFile = true;
                     
@@ -757,7 +762,6 @@
             let auditTotalUnits = 0;
             let auditOosCount = 0;
 
-            // 1. Extract Baseline Targets from memory
             for (const reg in baselineData) {
                 if (selRegion !== "All" && selRegion !== reg) continue;
                 for (const subreg in baselineData[reg]) {
@@ -790,7 +794,6 @@
             let gardaOosCount = 0;
             let tableHtml = "";
 
-            // 2. Iterate through Master Fleet List
             for (const [unit, data] of Object.entries(masterUnits)) {
                 
                 if (showVendedOnly && !isVended(data.branch)) continue;
@@ -849,7 +852,6 @@
                 `;
             }
 
-            // ---- Render Garda KPIs ----
             const activeUnits = Math.max(0, topTotalUnits - gardaOosCount);
             const delta = (activeUnits - topMaxRoutes); 
             let deltaColor = 'cyan';
@@ -862,20 +864,18 @@
             document.getElementById('kpiContainer').innerHTML = `
                 <div class="kpi-tile"><div class="kpi-title">Total Units (DOMO VDR)</div><div class="kpi-value">${topTotalUnits}</div></div>
                 <div class="kpi-tile"><div class="kpi-title">Max Routes</div><div class="kpi-value">${topMaxRoutes}</div></div>
-                <div class="kpi-tile danger"><div class="kpi-title">Current OOS</div><div class="kpi-value">${gardaOosCount}</div></div>
+                <div class="kpi-tile danger"><div class="kpi-title">Current OOS (Garda)</div><div class="kpi-value">${gardaOosCount}</div></div>
                 <div class="kpi-tile success"><div class="kpi-title">Active Units</div><div class="kpi-value">${activeUnits}</div></div>
                 <div class="kpi-tile ${deltaColor}"><div class="kpi-title">Delta (Act vs Max)</div><div class="kpi-value">${delta > 0 ? '+'+delta : delta}</div></div>
                 <div class="kpi-tile"><div class="kpi-title">Availability %</div><div class="kpi-value">${availability}</div></div>
                 <div class="kpi-tile"><div class="kpi-title">Useful %</div><div class="kpi-value">${useful}</div></div>
             `;
 
-            // ---- Render Table ----
             if (tableHtml === "") {
                  tableHtml = `<tr><td colspan="11" style="text-align: center; color: var(--text-gray); padding: 30px;">No assets match this filter criteria.</td></tr>`;
             }
             document.getElementById('assetTableBody').innerHTML = tableHtml;
 
-            // ---- Render Audit KPIs ----
             const auditActive = Math.max(0, auditTotalUnits - auditOosCount);
             const auditDelta = auditActive - auditMaxRoutes;
             const auditAvail = auditTotalUnits > 0 ? ((auditActive / auditTotalUnits) * 100).toFixed(1) + "%" : "0.0%";
@@ -891,7 +891,6 @@
                 <div class="kpi-tile"><div class="kpi-title">Useful %</div><div class="kpi-value">${auditUseful}</div></div>
             `;
 
-            // Re-apply sort if active
             if (currentSortColumn !== -1) {
                 let savedDirection = isAscending; 
                 isAscending = !isAscending; 
@@ -901,6 +900,7 @@
                 isAscending = savedDirection; 
             }
         }
+
     </script>
 </body>
 </html>
