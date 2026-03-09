@@ -81,7 +81,7 @@
         .controls-wrapper {
             background: var(--card-bg);
             border-radius: 8px;
-            padding: 15px 25px; /* Tightened padding for better centering */
+            padding: 15px 25px; 
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             margin-bottom: 25px;
             border: 1px solid var(--border-color);
@@ -92,7 +92,7 @@
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
-            align-items: center; /* Centered vertically to eliminate awkward white space */
+            align-items: center; 
         }
         .filter-group {
             display: flex;
@@ -268,6 +268,10 @@
         .ghost-row:hover td { background-color: #fef08a !important; }
 
         .vdr-comment { color: var(--text-muted); font-weight: 600; font-size: 0.75rem; line-height: 1.4; max-width: 350px; display: block; white-space: normal; }
+        
+        /* Links */
+        .ro-link { color: var(--secondary); text-decoration: none; font-weight: 700; transition: color 0.2s; }
+        .ro-link:hover { text-decoration: underline; color: #0369a1; }
     </style>
 </head>
 <body>
@@ -363,7 +367,7 @@
     <script>
         // ============================================================================
         // 🔗 SYSTEM CONFIGURATION
-        // Uses relative path since the HTML and Excel file are hosted in the same repo
+        // Uses relative path since the HTML and Excel file are hosted in the same folder
         // ============================================================================
         const GITHUB_RAW_URL = "master_file.xlsx"; 
         
@@ -757,7 +761,13 @@
                 }
 
                 let roHtml = data.roSet.size > 0 ? `<span class="badge status-dark">${data.roSet.size}</span>` : `0`;
-                let allROsHtml = data.roSet.size > 0 ? Array.from(data.roSet).join(", ") : `<span style="color: var(--text-muted);">-</span>`;
+                
+                let allROsHtml = `<span style="color: var(--text-muted);">-</span>`;
+                if (data.roSet.size > 0) {
+                    allROsHtml = Array.from(data.roSet).map(ro => 
+                        `<a href="https://afshub.azurewebsites.net/Vendors/VendedRepairOrder/Estimate/${String(ro).trim()}" target="_blank" class="ro-link">${String(ro).trim()}</a>`
+                    ).join(", ");
+                }
 
                 let displayComments = data.gardaComments; 
                 if (data.comments && data.comments.length > 0) {
@@ -852,7 +862,6 @@
             }
         }
 
-        // --- TRIGGER AUTOMATIC FETCH ON PAGE LOAD ---
         document.addEventListener('DOMContentLoaded', loadDataFromGitHub);
 
     </script>
