@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --amerit-yellow: #FFC600;
@@ -81,7 +81,7 @@
         .controls-wrapper {
             background: var(--card-bg);
             border-radius: 8px;
-            padding: 20px;
+            padding: 15px 25px; /* Tightened padding for better centering */
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             margin-bottom: 25px;
             border: 1px solid var(--border-color);
@@ -92,7 +92,7 @@
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
-            align-items: flex-end;
+            align-items: center; /* Centered vertically to eliminate awkward white space */
         }
         .filter-group {
             display: flex;
@@ -272,13 +272,13 @@
 </head>
 <body>
 
-    <div class="header-brand">
-        <div>Amerit Fleet Solutions - Unified Asset KPI & Gap Analysis Dashboard</div>
-        <div class="brand-tag">KEEP ON ROLLING&trade;</div>
-    </div>
-
     <div class="container">
         
+        <div class="header-brand">
+            <div>Amerit Fleet Solutions - Unified Asset KPI & Gap Analysis Dashboard</div>
+            <div class="brand-tag">KEEP ON ROLLING&trade;</div>
+        </div>
+
         <div id="loadingBanner">
             🔄 Automatically fetching live data from master_file.xlsx...
         </div>
@@ -787,7 +787,6 @@
                 `;
             }
 
-            // ---- Build KPI Cards Template Function ----
             function buildKpiCard(title, val, borderClass, textClass) {
                 return `
                 <div class="kpi-card" style="border-color: ${borderClass};">
@@ -798,7 +797,6 @@
                 </div>`;
             }
 
-            // ---- Render Garda KPIs ----
             const activeUnits = Math.max(0, topTotalUnits - gardaOosCount);
             const delta = (activeUnits - topMaxRoutes); 
             
@@ -819,13 +817,11 @@
                 buildKpiCard("Availability %", availability, "var(--amerit-grey)", "var(--amerit-grey)") +
                 buildKpiCard("Useful %", useful, "var(--amerit-grey)", "var(--amerit-grey)");
 
-            // ---- Render Table ----
             if (tableHtml === "") {
                  tableHtml = `<tr><td colspan="11" style="text-align: center; color: var(--text-muted); padding: 30px;">No assets match this filter criteria.</td></tr>`;
             }
             document.getElementById('assetTableBody').innerHTML = tableHtml;
 
-            // ---- Render Audit KPIs ----
             const auditActive = Math.max(0, auditTotalUnits - auditOosCount);
             const auditDelta = auditActive - auditMaxRoutes;
             
