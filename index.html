@@ -69,36 +69,6 @@
             margin-bottom: 25px;
             border: 1px solid var(--border);
         }
-        
-        .upload-card {
-            background: #F0FDF4;
-            border: 2px dashed #059669;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.2s ease;
-            margin-bottom: 20px;
-        }
-        .upload-card:hover {
-            background: #D1FAE5;
-        }
-        .upload-card label {
-            display: block;
-            font-size: 16px;
-            font-weight: 700;
-            color: #047857;
-            margin-bottom: 8px;
-        }
-        .upload-card input[type="file"] {
-            font-family: 'Raleway', sans-serif;
-            font-size: 14px;
-            color: var(--text-gray);
-            cursor: pointer;
-            padding: 10px;
-            background: white;
-            border: 1px solid #059669;
-            border-radius: 6px;
-        }
 
         /* Filters & Toggles */
         .filter-section {
@@ -339,12 +309,6 @@
     <div class="container">
         
         <div class="controls-wrapper">
-            <div class="upload-card">
-                <label>📁 Drop Master File Here</label>
-                <div style="font-size: 12px; color: #065F46; margin-bottom: 10px;">Please upload your unified <strong>master_file.xlsx</strong> containing all records.</div>
-                <input type="file" id="masterUpload" accept=".xlsx, .xls" />
-            </div>
-
             <div class="filter-section">
                 <div class="filter-group">
                     <label>Region</label>
@@ -417,7 +381,7 @@
                         </tr>
                     </thead>
                     <tbody id="assetTableBody">
-                        <tr><td colspan="11" style="text-align: center; color: var(--text-gray); padding: 30px;">Please manually select your master_file.xlsx to view data.</td></tr>
+                        <tr><td colspan="11" style="text-align: center; color: var(--amerit-blue); padding: 30px; font-weight: bold;">🔄 Automatically fetching live data from secure database...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -426,6 +390,13 @@
     </div>
 
     <script>
+        // ============================================================================
+        // 🔗 SYSTEM CONFIGURATION
+        // REPLACE THIS URL WITH THE RAW GITHUB LINK TO YOUR master_file.xlsx
+        // Example: "https://raw.githubusercontent.com/YourUser/YourRepo/main/master_file.xlsx"
+        // ============================================================================
+        const GITHUB_RAW_URL = "https://github.com/nmaysonet/afsvdr/raw/refs/heads/main/master_file.xlsx"; 
+        
         function exportToExcel() {
             const table = document.getElementById("drilldownTable");
             if (table.rows.length <= 1 || (table.rows.length === 2 && table.rows[1].cells[0].colSpan > 1)) {
@@ -465,8 +436,6 @@
         const deltaToggle = document.getElementById('deltaToggle');
         const vendedToggle = document.getElementById('vendedToggle');
         
-        document.getElementById('masterUpload').addEventListener('change', handleFileUpload);
-
         regionSelect.addEventListener('change', () => { populateSubregions(); updateDashboard(); });
         subregionSelect.addEventListener('change', () => { populateBranches(); updateDashboard(); });
         branchSelect.addEventListener('change', updateDashboard);
@@ -506,50 +475,47 @@
             }
         }
 
-        // --- MANUAL UPLOAD PROCESSING ENGINE ---
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        // --- AUTOMATED GITHUB FETCH ENGINE ---
+        async function loadDataFromGitHub() {
+            if (GITHUB_RAW_URL === "YOUR_RAW_GITHUB_URL_HERE") {
+                document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--danger); padding: 30px; font-weight: bold;">System Error: GitHub URL has not been configured in the HTML code. Please edit the HTML file and paste your raw GitHub URL at line ~150.</td></tr>`;
+                return;
+            }
 
-            document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--amerit-blue); padding: 30px; font-weight: bold;">🔄 Processing workbook data...</td></tr>`;
+            try {
+                const response = await fetch(GITHUB_RAW_URL);
+                if (!response.ok) throw new Error("Network response was not ok");
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                const workbook = XLSX.read(data, {type: 'array'});
+                
+                const names = workbook.SheetNames.map(n => n.toLowerCase());
+                
+                const tab1Name = workbook.SheetNames[names.findIndex(n => n.includes("national"))];
+                const tab2Name = workbook.SheetNames[names.findIndex(n => n.includes("domo unit") || n.includes("listing") || n.includes("master"))];
+                const tab3Name = workbook.SheetNames[names.findIndex(n => n.includes("summary"))];
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    
-                    const names = workbook.SheetNames.map(n => n.toLowerCase());
-                    
-                    const tab1Name = workbook.SheetNames[names.findIndex(n => n.includes("national"))];
-                    const tab2Name = workbook.SheetNames[names.findIndex(n => n.includes("domo unit") || n.includes("listing") || n.includes("master"))];
-                    const tab3Name = workbook.SheetNames[names.findIndex(n => n.includes("summary"))];
-
-                    if (!tab1Name || !tab2Name || !tab3Name) {
-                        alert("Error: Could not find all required tabs (National Consolidation, DOMO Unit Listing, Summary). Please ensure names match the template.");
-                        document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--danger); padding: 30px; font-weight: bold;">Error: Missing required tabs in the uploaded file.</td></tr>`;
-                        return;
-                    }
-
-                    const sheet1 = XLSX.utils.sheet_to_json(workbook.Sheets[tab1Name], {header: 1, defval: ""});
-                    const sheet2 = XLSX.utils.sheet_to_json(workbook.Sheets[tab2Name], {header: 1, defval: ""});
-                    const sheet3 = XLSX.utils.sheet_to_json(workbook.Sheets[tab3Name], {header: 1, defval: ""});
-
-                    processSummary(sheet3);
-                    processMaster(sheet2);
-                    processGarda(sheet1);
-                    
-                    isDataLoaded = true;
-                    populateRegions();
-                    updateDashboard();
-                    document.getElementById('auditDashboard').style.display = 'block';
-
-                } catch (error) {
-                    console.error("Error processing file:", error);
-                    document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--danger); padding: 30px; font-weight: bold;">System Error: Unable to process the Excel file. Ensure it is a valid workbook.</td></tr>`;
+                if (!tab1Name || !tab2Name || !tab3Name) {
+                    throw new Error("Missing required tabs (National Consolidation, DOMO Unit Listing, Summary).");
                 }
-            };
-            reader.readAsArrayBuffer(file);
+
+                const sheet1 = XLSX.utils.sheet_to_json(workbook.Sheets[tab1Name], {header: 1, defval: ""});
+                const sheet2 = XLSX.utils.sheet_to_json(workbook.Sheets[tab2Name], {header: 1, defval: ""});
+                const sheet3 = XLSX.utils.sheet_to_json(workbook.Sheets[tab3Name], {header: 1, defval: ""});
+
+                processSummary(sheet3);
+                processMaster(sheet2);
+                processGarda(sheet1);
+                
+                isDataLoaded = true;
+                populateRegions();
+                updateDashboard();
+                document.getElementById('auditDashboard').style.display = 'block';
+
+            } catch (error) {
+                console.error("Error loading data:", error);
+                document.getElementById('assetTableBody').innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--danger); padding: 30px; font-weight: bold;">System Error: Unable to fetch live data. Please verify your GitHub URL.</td></tr>`;
+            }
         }
 
         function processSummary(sheet) {
@@ -900,6 +866,9 @@
                 isAscending = savedDirection; 
             }
         }
+
+        // --- TRIGGER AUTOMATIC FETCH ON PAGE LOAD ---
+        document.addEventListener('DOMContentLoaded', loadDataFromGitHub);
 
     </script>
 </body>
